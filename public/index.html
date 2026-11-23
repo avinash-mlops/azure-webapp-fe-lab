@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Azure Frontend Lab</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: white;
+      background: #102b50;
+    }
+    header {
+      padding: 20px 8%;
+      background: #091b32;
+    }
+    .hero {
+      min-height: 75vh;
+      padding: 80px 8%;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(120deg, #16466d, #397b72);
+    }
+    .content { max-width: 650px; }
+    h1 { font-size: clamp(40px, 6vw, 68px); }
+    p { font-size: 19px; line-height: 1.7; }
+    button {
+      background: #1687d9;
+      color: white;
+      border: 0;
+      padding: 14px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    footer {
+      padding: 25px;
+      text-align: center;
+      background: #091b32;
+    }
+  </style>
+</head>
+<body>
+  <header><h2>Azure Frontend Lab</h2></header>
+  <section class="hero">
+    <div class="content">
+      <h1>Build. Deploy. Learn.</h1>
+      <p>Welcome to my Azure App Service frontend lab.
+      Learn Node.js, Azure DevOps and CI/CD deployment.</p>
+      <button onclick="checkHealth()">Check Application Health</button>
+      <p id="status">Application ready.</p>
+    </div>
+  </section>
+  <footer>Azure Web App Frontend Lab | DevOps Practice</footer>
+  <script>
+    async function checkHealth() {
+      const response = await fetch('/health');
+      const data = await response.json();
+      document.getElementById('status').textContent =
+        'Application status: ' + data.status;
+    }
+  </script>
+</body>
+</html>
