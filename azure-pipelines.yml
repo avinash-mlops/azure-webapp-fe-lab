@@ -1,30 +1,71 @@
+
 trigger:
-  - main
+  branches:
+    include:
+      - main
 
 pool:
   vmImage: ubuntu-latest
 
-steps:
-  - task: UseNode@1
-    inputs:
-      version: '22.x'
-    displayName: Use Node.js
+variables:
+  azureServiceConnection: 'sc-ai-lab'
+  resourceGroupName: 'rg-gemni-frontend-ai'
+  appName: 'gemini-lab1'
 
-  - script: npm ci
-    displayName: Install dependencies
+stages:
 
-  - script: node --check server.js
-    displayName: Validate application
+  # Stage 1: Build
+  - stage: Build
+    displayName: Build Node.js Application
+    jobs:
+      - job: Build
+        displayName: Build and Package
+        steps:
+          - checkout: self
 
-  - task: ArchiveFiles@2
-    inputs:
-      rootFolderOrFile: '$(Build.SourcesDirectory)'
-      includeRootFolder: false
-      archiveType: zip
-      archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
-      replaceExistingArchive: true
+          - task: UseNode@1
+            inputs:
+              version: '22.x'
+            displayName: Use Node.js
 
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: '$(Build.ArtifactStagingDirectory)/frontend.zip'
-      artifact: frontend-app
+          - script: npm ci
+            displayName: Install dependencies
+
+          - script: node --check server.js
+            displayName: Validate application
+
+          - task: ArchiveFiles@2
+            displayName: Archive application
+            inputs:
+              rootFolderOrFile: '$(Build.SourcesDirectory)'
+              includeRootFolder: false
+              archiveType: zip
+              archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
+              replaceExistingArchive: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish build artifact
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/frontend.zip'
+              artifact: frontend-app
+
+  # Stage 2: Deploy
+  - stage: Deploy
+    displayName: Deploy to Azure App Service
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: Deploy
+        displayName: Deploy Node.js Application
+        steps:
+          - download: current
+            artifact: frontend-app
+
+          - task: AzureWebApp@1
+            displayName: Deploy to Azure App Service
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              appType: webAppLinux
+              appName: '$(appName)'
+              package: '$(Pipeline.Workspace)/frontend-app/frontend.zip'
+              deploymentMethod: zipDeploy
